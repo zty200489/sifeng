@@ -1,5 +1,5 @@
-from .transformers import FeedForwardLayer
+from .transformers import FeedForwardLayer, MultiheadedSelfAttentionModule
 
 __all__ = [
-    "FeedForwardLayer",
+    "FeedForwardLayer", "MultiheadedSelfAttentionModule",
 ]
