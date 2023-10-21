@@ -6,7 +6,7 @@
     <a href="#stars"><img alt="stars" src="https://img.shields.io/github/stars/zty200489/sifeng"></a>
     <a href="#watchers"><img alt="watchers" src="https://img.shields.io/github/watchers/zty200489/sifeng"></a>
     <a href="#forks"><img alt="forks" src="https://img.shields.io/github/forks/zty200489/sifeng"></a>
-    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.0.2-74c365"></a>
+    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.1.1-74c365"></a>
 </p>
 
 **Documentation: [Getting Started](https://zty200489.github.io/sifeng/#/getting-started/README) | [API Reference](https://zty200489.github.io/sifeng/#/api-reference/README)**  
@@ -15,6 +15,7 @@
 Sifeng (思风, imported as `sifeng`) is a quant research framework built by our team, which also share the same name Sifeng. It is a python package mainly designed to be used within our team but also welcomes public users. Feel free to tell us what features you want to add to this project. Currently it supports many features such as:
 - :book: Detailed [wiki](https://zty200489.github.io/sifeng/#/), and annotations.
 - :chart_with_upwards_trend: Accessible and easy to use function for retrieving structurized data.
+- :zap: SOTA deep learning models, bayesian nerual networks, useful tools, and so on.
 
 ## Table of Contents
 
@@ -53,3 +54,5 @@ sifeng requires the following dependencies:
 ## Highlights
 
 - :chart_with_upwards_trend: We understand that in quant resarch, data is the key. So we provide easy-to-use API for retrieving data from remote OSS server. We currently only supports daily HLOC data, indicators and basic information, but we will include other kinds of data shortly in the future.
+- :handshake: As out deep-learning models are based on torch, we support uniform and consistent APIs that can be pieced easily into your eexisting projects to ease you the burden of repetitive hard work.
+- :abacus: Model is the second most important part when doing quant researches. So we provide SOTA deep-learning models including `MultiheadedSelfAttentionModule`, `MixtureOfExpertsBlock` and even Bayesian modules to help you conduct research across various kinds of data.
