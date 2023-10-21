@@ -4,4 +4,5 @@
     - [basic_info](basic_info.md)
     - [kline_day](kline_day.md)
     - [indicator_day](indicator_day.md)
+    - [stat](stat.md)
 - [Change Log](/change-log/README.md)

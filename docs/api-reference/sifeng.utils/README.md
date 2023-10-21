@@ -4,13 +4,19 @@
 
 `sifeng.utils` holds functions that make programming and researching easier. Jobs such as fetching data from remote servers are already provided.
 
+## Query Functions
+
+| Name |Table Type | Description |
+| :--: | :--: | :-- |
+| [kline_day](kline_day.md) | cross-sectional | Chinese A-share stock market kline (HLOC), day frequency data. |
+| [indicator_day](indicator_day.md) | cross-sectional|Chinese A-share stock market indicators, day frequency data. |
+| [baisc_info](basic_info.md) | static | The fundamentals of A-share stocks. eg. list-date, industry, name, etc. |
+
 ## Functions
 
-|Name|Table Type|Description|
-|:--:|:--:|:--|
-|[kline_day](kline_day.md)|cross-sectional|Chinese A-share stock market kline (HLOC), day frequency data.|
-|[indicator_day](indicator_day.md)|cross-sectional|Chinese A-share stock market indicators, day frequency data.|
-|[baisc_info](basic_info.md)|static|The fundamentals of A-share stocks. eg. list-date, industry, name, etc.|
+| Name | Description |
+| :--: | :-- |
+| [stat](stat.md) | Returns analysis for a specific model. |
 
 ## Appendix: stock data
 
