@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 0.4.1
+
+- **Perf:** Improved performnce of mixture of experts block.
+
+## Version 0.3.1
+
+- Added mixture of experts block.
+
 ## Version 0.2.1
 
 - Added basic byesin modules, along with the necessary ELBO losses.
