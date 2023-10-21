@@ -2,7 +2,7 @@
 
 ## Version 0.4.1
 
-- **Perf:** Improved performnce of mixture of experts block.
+- **Perf:** Improved performance of mixture of experts block.
 
 ## Version 0.3.1
 
@@ -26,7 +26,7 @@
 
 - Added `stat` to utilities.
 - Added README and requirements.
-- *FIX:* `utils` can now be imported directly from `.`.
+- **Fix:** `utils` can now be imported directly from `.`.
 
 ## Version 0.0.1
 
