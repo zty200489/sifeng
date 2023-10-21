@@ -6,7 +6,7 @@
     <a href="#stars"><img alt="stars" src="https://img.shields.io/github/stars/zty200489/sifeng"></a>
     <a href="#watchers"><img alt="watchers" src="https://img.shields.io/github/watchers/zty200489/sifeng"></a>
     <a href="#forks"><img alt="forks" src="https://img.shields.io/github/forks/zty200489/sifeng"></a>
-    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.1.1-74c365"></a>
+    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.1.2-74c365"></a>
 </p>
 
 **Documentation: [Getting Started](https://zty200489.github.io/sifeng/#/getting-started/README) | [API Reference](https://zty200489.github.io/sifeng/#/api-reference/README)**  
