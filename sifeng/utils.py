@@ -12,6 +12,7 @@ from typing import Union, Literal, List
 __all__ = [
     "basic_info",
     "kline_day",
+    "indicator_day",
 ]
 
 baseurl = "https://data.sifeng.site/"
@@ -97,6 +98,58 @@ def kline_day(fields: Union[Literal["*"], List[str]] = "*",
     Parallel(n_jobs=n_jobs, verbose=0)(tasks)
     if fields == "*":
         fields = ['stock_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount', 'adj_factor']
+    if stock_code == "*":
+        sql = f"SELECT {', '.join(fields)} FROM read_parquet('{local_dir / '*.parquet'}') WHERE trade_date BETWEEN '{begin_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+    elif isinstance(stock_code, str):
+        sql = f"SELECT {', '.join(fields)} FROM read_parquet('{local_dir / '*.parquet'}') WHERE trade_date BETWEEN '{begin_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}' AND stock_code = '{stock_code}'"
+    else:
+        connector = "', '"
+        sql = f"SELECT {', '.join(fields)} FROM read_parquet('{local_dir / '*.parquet'}') WHERE trade_date BETWEEN '{begin_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}' AND stock_code IN ('{connector.join(stock_code)}')"
+    return duckdb.sql(sql).df()
+
+
+def indicator_day(fields: Union[Literal["*"], List[str]] = "*",
+                  begin_date: str = "1999-12-19",
+                  end_date: str = datetime.now().strftime("%Y-%d-%m"),
+                  stock_code: Union[Literal["*"], List[str]] = "*",
+                  local_dir: Path = Path.home() / ".sifeng/parquet/indicator_day/",
+                  n_jobs: int = 1):
+    """Fetch indicator (freq. day) from server
+
+    Parameters
+    ----------
+    fields: Union[Literal["*"], List[str]], default `'*'`
+        The fields you want, you may choose from `["stock_code", "trade_date", "turnover_rate", \
+    "turnover_rate_free", "volume_ratio", "pe", "pe_ttm", "pb", "ps", "ps_ttm", "dv_ratio", \
+    "dv_ttm", "total_share", "float_share", "free_share", "total_mv", "circ_mv"]`, or enter `'*'`
+    to choose all.
+    begin_date: str, deafult `"1999-12-19"`
+        The date youe want the query to begin.
+    end_date: str, default `datetime.now().strftime("%Y-%d-%m")`
+        The date you want the query to end.
+    stock_code: Union[Literal["*"], List[str]], default `'*'`
+        The code of the stocks you want to query, or enter `'*'` for all.
+    local_dir: pathlib.Path, default `Path.home() / ".sifeng/parquet/indicator_day/"`
+        The local path you want to data to download to, please do not change under normal circumsta
+    nces.
+    n_jobs: int, default `1`
+        The number of workers for fetching.
+    """
+    def fdownload(mend):
+        filename = f"INDICATOR-DAY{mend.strftime('%Y%m')}.parquet"
+        update = not (local_dir / filename).exists()
+        if mend.year == datetime.now().year and mend.month == datetime.now().month:
+            update = True
+        if update:
+            resp = requests.get(baseurl + filename)
+            with open(local_dir / filename, "wb") as file:
+                file.write(resp.content)
+    begin_date, end_date = pd.to_datetime(begin_date), pd.to_datetime(end_date)
+    tasks = tqdm([delayed(fdownload)(_) for _ in pd.date_range(begin_date, end_date + MonthEnd(0), freq="M")], desc="Checking", unit="month", unit_scale=True, leave=False)
+    local_dir.mkdir(parents=True, exist_ok=True)
+    Parallel(n_jobs=n_jobs, verbose=0)(tasks)
+    if fields == "*":
+        fields = ['stock_code', 'trade_date', 'turnover_rate', 'turnover_rate_free', 'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm', 'dv_ratio', 'dv_ttm', 'total_share', 'float_share', 'free_share', 'total_mv', 'circ_mv']
     if stock_code == "*":
         sql = f"SELECT {', '.join(fields)} FROM read_parquet('{local_dir / '*.parquet'}') WHERE trade_date BETWEEN '{begin_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
     elif isinstance(stock_code, str):
