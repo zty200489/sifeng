@@ -39,4 +39,4 @@ df = kline_day(fields=["trade_date", "stock_code", "close", "adj_factor"],
                end_date="2023-01-31")
 ```
 
-to fetch the close prices of the Chinese A-share stocks between `2023-01-01` and `2023-01-31`, along with the adjusting factor. For more information, you can check [API Reference](../api-reference/README)
+to fetch the close prices of the Chinese A-share stocks between `2023-01-01` and `2023-01-31`, along with the adjusting factor. For more information, you can check [API Reference](../api-reference/README.md)
