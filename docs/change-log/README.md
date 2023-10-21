@@ -1,5 +1,9 @@
 # Change Log
 
+## Version 0.2.1
+
+- Added basic byesin modules, along with the necessary ELBO losses.
+
 ## Version 0.1.2
 
 - Added `FocalLoss`.
