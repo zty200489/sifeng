@@ -1,0 +1,7 @@
+numpy
+pandas
+duckdb
+joblib
+requests
+tqdm
+colorama
