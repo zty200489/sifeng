@@ -6,7 +6,7 @@
     <a href="#stars"><img alt="stars" src="https://img.shields.io/github/stars/zty200489/sifeng"></a>
     <a href="#watchers"><img alt="watchers" src="https://img.shields.io/github/watchers/zty200489/sifeng"></a>
     <a href="#forks"><img alt="forks" src="https://img.shields.io/github/forks/zty200489/sifeng"></a>
-    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.1.1-74c365"></a>
+    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.1.2-74c365"></a>
 </p>
 
 **Documentation: [Getting Started](https://zty200489.github.io/sifeng/#/getting-started/README) | [API Reference](https://zty200489.github.io/sifeng/#/api-reference/README)**  
@@ -55,4 +55,5 @@ sifeng requires the following dependencies:
 
 - :chart_with_upwards_trend: We understand that in quant resarch, data is the key. So we provide easy-to-use API for retrieving data from remote OSS server. We currently only supports daily HLOC data, indicators and basic information, but we will include other kinds of data shortly in the future.
 - :handshake: As out deep-learning models are based on torch, we support uniform and consistent APIs that can be pieced easily into your eexisting projects to ease you the burden of repetitive hard work.
+- :bookmark_tabs: Detailed and fully-customizeable logs that fits specifically for your project. You can easily design your own log format or print custom log messages by inheriting the `VerboseBase` class and passing it into an trainer.
 - :abacus: Model is the second most important part when doing quant researches. So we provide SOTA deep-learning models including `MultiheadedSelfAttentionModule`, `MixtureOfExpertsBlock` and even Bayesian modules to help you conduct research across various kinds of data.
