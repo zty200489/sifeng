@@ -8,6 +8,7 @@ from typing import Optional, Literal
 __all__ = [
     "FeedForwardLayer",
     "MultiheadedSelfAttentionModule",
+    "TransformerEncoderBlock",
 ]
 
 class FeedForwardLayer(nn.Module):
@@ -124,3 +125,74 @@ class MultiheadedSelfAttentionModule(nn.Module):
         out = torch.matmul(attn, v).transpose(1, 2).reshape(bsz, slen, self.v_dim) # [bsz * slen * v_dim]
         out = torch.matmul(out, self.W_Out)
         return out
+
+class TransformerEncoderBlock(nn.Module):
+    """The Transformer Encoder Block
+    - post layer-norm
+      A. Vaswani et al., “Attention Is All You Need.” arXiv, Aug. 01, 2023. Accessed: Sep. 25,
+      2023. [Online]. Available: http://arxiv.org/abs/1706.03762
+    - pre layer-norm
+      R. Xiong et al., “On Layer Normalization in the Transformer Architecture.” arXiv, Jun. 29,
+      2020. Accessed: Sep. 28, 2023. [Online]. Available: http://arxiv.org/abs/2002.04745
+    - sandwich layer-norm
+      [UNKNOWN]
+    - TODO: deepnorm
+      H. Wang, S. Ma, L. Dong, S. Huang, D. Zhang, and F. Wei, “DeepNet: Scaling Transformers to
+      1,000 Layers.” arXiv, Mar. 01, 2022. Accessed: Sep. 28, 2023. [Online]. Available:
+      http://arxiv.org/abs/2203.00555
+
+    Parameters
+    ----------
+    num_head: int
+        the number of self-attention heads for the attention module
+    embed_dim: int
+        the dimension of input embeddings
+    qk_dim: Optional[int], default `None`
+        the dimension of qk vectors for the attention module
+    v_dim: Optional[int], default `None`
+        the dimension of v vectors for the attention module
+    dropout: float, default `0.0`
+        probability of dropout
+    feed_forward: nn.Module, default `sifeng.dl.modules.FeedForwardLayer`
+        the choice of feedforward layer
+    layernorm_mode: Literal["post", "pre", "sanwich"], default `"pre"`
+        The mode of layernorm
+        - "post": layernorm happens after residual connection
+        - "pre": layernorm happens before attention block, better when training without warmup
+        - "sanwich": layernorm happens before and after attention block, better when training under FP16
+    *args, **kwargs:
+        parameters for your choice of feed forward network
+
+    Input shape
+    -----------
+    [bsz * slen * embed_dim]
+    """
+    def __init__(self,
+                 num_head: int,
+                 embed_dim: int,
+                 qk_dim: Optional[int] = None,
+                 v_dim: Optional[int] = None,
+                 dropout: float = 0.0,
+                 feed_forward: nn.Module = FeedForwardLayer,
+                 layernorm_mode: Literal["post", "pre", "sanwich"] = "pre",
+                 *args, **kwargs) -> None:
+        super(TransformerEncoderBlock, self).__init__()
+        self.layernorm_mode = layernorm_mode
+        self.layernorm = nn.LayerNorm(embed_dim, elementwise_affine=False)
+        self.feed_forward = feed_forward(embed_dim=embed_dim, *args, **kwargs)
+        self.attention = MultiheadedSelfAttentionModule(num_head, embed_dim, qk_dim=qk_dim, v_dim=v_dim, dropout=dropout)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self,
+                x: torch.Tensor, # [batch * slen * embed_dim]
+                ) -> torch.Tensor:
+        if self.layernorm_mode == "post":
+            x = self.layernorm(x + self.dropout(self.attention(x))) # [batch * slen * embed_dim]
+            x = self.layernorm(x + self.dropout(self.feed_forward(x))) # [batch * slen * embed_dim]
+        elif self.layernorm_mode == "pre":
+            x = x + self.dropout(self.attention(self.layernorm(x))) # [batch * slen * embed_dim]
+            x = x + self.dropout(self.feed_forward(self.layernorm(x))) # [batch * slen * embed_dim]
+        elif self.layernorm_mode == "sandwich":
+            x = x + self.dropout(self.layernorm(self.attention(self.layernorm(x)))) # [batch * slen * embed_dim]
+            x = x + self.dropout(self.layernorm(self.feed_forward(self.layernorm(x)))) # [batch * slen * embed_dim]
+        return x
