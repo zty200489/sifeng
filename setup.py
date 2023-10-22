@@ -14,6 +14,13 @@ REQUIRES_PYTHON = '>=3.8.0'
 
 # Required Packages
 REQUIRED = [
+    "tqdm",
+    "numpy",
+    "pandas",
+    "duckdb",
+    "joblib",
+    "requests",
+    "colorama",
 ]
 
 # Optional Packages
