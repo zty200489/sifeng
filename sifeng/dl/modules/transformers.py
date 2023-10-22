@@ -109,6 +109,7 @@ class MultiheadedSelfAttentionModule(nn.Module):
             xavier_uniform_(self.W_V)
         xavier_uniform_(self.W_Out)
 
+    # TODO: Functionize multiheaded-self attention module.
     def forward(self,
                 x: torch.Tensor, # [bsz * slen * embed_dim]
                 ) -> torch.Tensor:
