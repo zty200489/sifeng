@@ -44,7 +44,8 @@ cd sifeng
 Then when you are in its directory, **checkout** to your own feature branch from the dev branch to start working on your idea with (replace `feature-name` as appropriate):
 
 ```shell
-git checkout -b feat/feature-name origin/dev
+git checkout dev
+git checkout -b feat/feature-name dev
 ```
 
 You can now start working, be sure to make **commits** regularly to keep track of each milestone you make, and be please sure to make commit message useful and informative:
