@@ -1,12 +1,22 @@
+<!--
+    Because the repo owner is too stupid, he needs a memo to remind himself of todos for a new version releases:
+    1. Change `__version__.py` and the version tag below.
+    2. Update the changelog afterwards.
+-->
+
 <h1 align="center">
     Si Feng: The machine learning quant research framework
 </h1>
 
 <p align="center">
-    <a href="#stars"><img alt="stars" src="https://img.shields.io/github/stars/zty200489/sifeng"></a>
-    <a href="#watchers"><img alt="watchers" src="https://img.shields.io/github/watchers/zty200489/sifeng"></a>
-    <a href="#forks"><img alt="forks" src="https://img.shields.io/github/forks/zty200489/sifeng"></a>
-    <a href="#version"><img alt="version" src="https://img.shields.io/badge/version-0.4.1-74c365"></a>
+    <a href="https://github.com/zty200489/sifeng/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/zty200489/sifeng"></a>
+    <a href="https://github.com/zty200489/sifeng/watchers"><img alt="watchers" src="https://img.shields.io/github/watchers/zty200489/sifeng"></a>
+    <a href="https://github.com/zty200489/sifeng/forks"><img alt="forks" src="https://img.shields.io/github/forks/zty200489/sifeng"></a>
+    <a href="https://github.com/zty200489/sifeng/commits"><img alt="commits" src="https://img.shields.io/github/commit-activity/y/zty200489/sifeng?logo=git&logoColor=white"></a>
+    <a href="#repo-size"><img alt="repo-size" src="https://img.shields.io/github/repo-size/zty200489/sifeng?logo=github&logoColor=white"></a>
+    <br />
+    <a href="https://zty200489.github.io/sifeng/#/change-log/README"><img alt="version" src="https://img.shields.io/badge/version-0.5.0-74c365"></a>
+    <a href="https://github.com/zty200489/sifeng/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/github/license/zty200489/sifeng"></a>
 </p>
 
 **Documentation: [Getting Started](https://zty200489.github.io/sifeng/#/getting-started/README) | [API Reference](https://zty200489.github.io/sifeng/#/api-reference/README)**  
