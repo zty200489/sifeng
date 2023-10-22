@@ -54,7 +54,7 @@ class MixtureOfExpertsBlock(nn.Module):
         self.gate = gate if gate is not None else nn.Linear(embed_dim, self.num_experts)
         self.experts = nn.ModuleList([expert(embed_dim=embed_dim, *args, **kwargs) for _ in range(self.num_experts)])
 
-    # TODO: Functionize MoE attention module.
+    # TODO: Functionize MoE module.
     def forward(self,
                 x: torch.Tensor, # [bsz * ?? * embed_dim]
                 ) -> torch.Tensor:
