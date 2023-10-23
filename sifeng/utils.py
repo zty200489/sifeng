@@ -216,15 +216,15 @@ def stat(model: torch.nn.Module,
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
     else:
         info = info + "|{}|\n".format(fmt("TMem. (SGD): {} + {} * bsz".format(
-                elafmt(8519680 + model_mem * 2 + optim_mem_x1, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+                elafmt((17039360 if torch.__version__ >= '2' else 0) + model_mem * 2 + optim_mem_x1, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
                 elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
         info = info + "|{}|\n".format(fmt("TMem. (Adam): {} + {} * bsz".format(
-                elafmt(8519680 + model_mem * 2 + optim_mem_x1 * 2, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+                elafmt((17039360 if torch.__version__ >= '2' else 0) + model_mem * 2 + optim_mem_x1 * 2, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
                 elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
         info = info + "|{}|\n".format(fmt("IMem.: {} + {} * bsz".format(
-                elafmt(8519680 + model_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+                elafmt((17039360 if torch.__version__ >= '2' else 0) + model_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
                 elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
     info = info + "└" + "─" * (row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5) + "┘"
