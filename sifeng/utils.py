@@ -1,4 +1,4 @@
-import torch, duckdb, requests, pandas as pd
+import torch, duckdb, requests, pandas as pd, numpy as np
 from tqdm.auto import tqdm
 from pathlib import Path
 from datetime import datetime
@@ -7,7 +7,7 @@ from pandas.tseries.offsets import MonthEnd
 from math import floor, ceil
 from colorama import Fore, Back, Style
 
-from typing import Union, Literal, List
+from typing import Union, Literal, List, Optional
 
 __all__ = [
     "stat",
@@ -16,6 +16,8 @@ __all__ = [
 
 def stat(model: torch.nn.Module,
          sort: Literal[":idx", "idx:", ":name", "name:", ":train", "train:", ":params", "params:", ":memory", "memory:"] = "train:",
+         in_shape: Optional[List[int]] = None,
+         device: torch.device = "cuda:0" if torch.cuda.is_available() else "cpu",
          ) -> str:
     """Prints analysis for a specific model
 
@@ -25,6 +27,10 @@ def stat(model: torch.nn.Module,
         the model to be interepted
     sort: Literal[":idx", "idx:", ":name", "name:", ":train", "train:", ":params", "params:", ":memory", "memory:"], deafult `"train:"`
         how to sort the output, a leading comma means ascending and a trailing comma means descending
+    in_shape: Optional[List[int]], default `None`
+        The shape of input sequence. Make sure the `batch_size` is not part of the input.
+    device: torch.device
+        The device to run the model on.
     """
     def fmt(info, length, place):
         info = str(info)
@@ -86,9 +92,7 @@ def stat(model: torch.nn.Module,
     )
     for idx, (name, w_variable) in enumerate(model.named_parameters()):
         shape = str(w_variable.shape)
-        params = 1
-        for dim_size in w_variable.shape:
-            params = params * dim_size
+        params = np.prod(w_variable.shape)
         model_params = model_params + params
         model_memsz = model_memsz + mem_lookup[w_variable.dtype] * params
         train = "True" if w_variable.requires_grad else "False"
@@ -124,6 +128,31 @@ def stat(model: torch.nn.Module,
     elif sort == "memory:":
         model_info.sort(key=lambda x: (x[5], -x[0]), reverse=True)
 
+    model_mem, hidden_mem, optim1_mem_x1 = -1, -1, -1
+    if in_shape is None or torch.device(device) == torch.device("cpu"):
+        # Estimate model memory consumption.
+        model_mem = model_memsz
+    else:
+        torch.cuda.init()
+        # Run the model once to aviod first-time memory allocs.
+        model.to("cpu")
+        model.to(device)
+        input = torch.rand(2, *in_shape, device=device, requires_grad=False)
+        model.eval()
+        with torch.no_grad():
+            output = model(input)
+        # Run the model again to estimate memory consumption.
+        torch.cuda.reset_peak_memory_stats(device)
+        env_mem = torch.cuda.memory_allocated(device)
+        with torch.no_grad():
+            output = model(input)
+        out_shape, out_percision = output.shape, output.dtype
+        max_memory_consumption = torch.cuda.max_memory_allocated(device) - env_mem
+        model_mem = model_memsz
+        hidden_mem = (max_memory_consumption - mem_lookup[out_percision] * np.prod(out_shape)) / 2
+        optim_mem_x1 = model_memsz
+
+    # Header
     info = info + "┌" + "─" * row_width[0] + \
                   "┬" + "─" * row_width[1] + \
                   "┬" + "─" * row_width[2] + \
@@ -138,6 +167,7 @@ def stat(model: torch.nn.Module,
         fmt(sort if sort in [":params", "params:"] else "params", row_width[4], "center"),
         fmt(sort if sort in [":memory", "memory:"] else "memory", row_width[5], "center"),
     )
+    # Info
     info = info + "├" + "─" * row_width[0] + \
                   "┼" + "─" * row_width[1] + \
                   "┼" + "─" * row_width[2] + \
@@ -170,14 +200,33 @@ def stat(model: torch.nn.Module,
                 )
     else:
         info = info + "│{}│\n".format(fmt("No Parameters", row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "center"))
+    # Summary
     info = info + "├" + "─" * row_width[0] + \
                   "┴" + "─" * row_width[1] + \
                   "┴" + "─" * row_width[2] + \
                   "┴" + "─" * row_width[3] + \
                   "┴" + "─" * row_width[4] + \
                   "┴" + "─" * row_width[5] + "┤\n"
-    info = info + "│{}│\n".format(fmt("Model params: {}".format(elafmt(model_params, 1000, ["", "K", "M", "B", "T"], 4)), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
-    info = info + "│{}│\n".format(fmt("Model memory: {}".format(elafmt(model_memsz, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4)), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+    info = info + "│{}│\n".format(fmt("Model params: {}".format(
+        elafmt(model_params, 1000, ["", "K", "M", "B", "T"], 4),
+        ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+    if hidden_mem == -1:
+        info = info + "|{}|\n".format(fmt("Model memory: {}".format(
+                elafmt(model_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+            ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+    else:
+        info = info + "|{}|\n".format(fmt("TMem. (SGD): {} + {} * bsz".format(
+                elafmt(8519680 + model_mem * 2 + optim_mem_x1, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+                elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+            ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+        info = info + "|{}|\n".format(fmt("TMem. (Adam): {} + {} * bsz".format(
+                elafmt(8519680 + model_mem * 2 + optim_mem_x1 * 2, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+                elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+            ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+        info = info + "|{}|\n".format(fmt("IMem.: {} + {} * bsz".format(
+                elafmt(8519680 + model_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+                elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+            ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
     info = info + "└" + "─" * (row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5) + "┘"
 
     return info
