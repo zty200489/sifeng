@@ -15,9 +15,10 @@ __all__ = [
 ]
 
 def stat(model: torch.nn.Module,
-         sort: Literal[":idx", "idx:", ":name", "name:", ":train", "train:", ":params", "params:", ":memory", "memory:"] = "train:",
          in_shape: Optional[List[int]] = None,
          device: torch.device = "cuda:0" if torch.cuda.is_available() else "cpu",
+         sort: Literal[":idx", "idx:", ":name", "name:", ":train", "train:", ":params", "params:", ":memory", "memory:"] = "train:",
+         style: Literal["fancy", "plain"] = "fancy"
          ) -> str:
     """Prints analysis for a specific model
 
@@ -25,12 +26,16 @@ def stat(model: torch.nn.Module,
     ----------
     model: torch.nn.Module
         the model to be interepted
-    sort: Literal[":idx", "idx:", ":name", "name:", ":train", "train:", ":params", "params:", ":memory", "memory:"], deafult `"train:"`
-        how to sort the output, a leading comma means ascending and a trailing comma means descending
     in_shape: Optional[List[int]], default `None`
         The shape of input sequence. Make sure the `batch_size` is not part of the input.
     device: torch.device
         The device to run the model on.
+    sort: Literal[":idx", "idx:", ":name", "name:", ":train", "train:", ":params", "params:", ":memory", "memory:"], deafult `"train:"`
+        how to sort the output, a leading comma means ascending and a trailing comma means descending
+    style: Literal["fancy", "plain"], default `"fancy"`
+        How the result is displayed:
+        - `"fancy"`: The result is displayed with UNICODE characters and colorama.
+        - `"plain"`: The result is displayed with ASCII characters.
     """
     def fmt(info, length, place):
         info = str(info)
@@ -128,29 +133,24 @@ def stat(model: torch.nn.Module,
     elif sort == "memory:":
         model_info.sort(key=lambda x: (x[5], -x[0]), reverse=True)
 
-    model_mem, hidden_mem, optim1_mem_x1 = -1, -1, -1
-    if in_shape is None or torch.device(device) == torch.device("cpu"):
-        # Estimate model memory consumption.
-        model_mem = model_memsz
-    else:
-        torch.cuda.init()
-        # Run the model once to aviod first-time memory allocs.
-        model.to("cpu")
+    flag_mem = False
+    if in_shape is not None and torch.device(device) != torch.device("cpu"):
+        flag_mem = True
         model.to(device)
-        input = torch.rand(2, *in_shape, device=device, requires_grad=False)
-        model.eval()
-        with torch.no_grad():
-            output = model(input)
-        # Run the model again to estimate memory consumption.
-        torch.cuda.reset_peak_memory_stats(device)
+        # 1. Run model with bsz = 2 with grad to control env.
+        input_ = torch.rand(2, *in_shape, device=device, requires_grad=True)
+        output_ = model(input_)
         env_mem = torch.cuda.memory_allocated(device)
+        # 2. Run model with bsz = 2 without grad to compute overhead.
+        input_ = torch.rand(2, *in_shape, device=device, requires_grad=False)
+        torch.cuda.reset_peak_memory_stats(device)
         with torch.no_grad():
-            output = model(input)
-        out_shape, out_percision = output.shape, output.dtype
-        max_memory_consumption = torch.cuda.max_memory_allocated(device) - env_mem
-        model_mem = model_memsz
-        hidden_mem = (max_memory_consumption - mem_lookup[out_percision] * np.prod(out_shape)) / 2
-        optim_mem_x1 = model_memsz
+            output_ = model(input_)
+        peak_overhead = (torch.cuda.max_memory_allocated(device) - env_mem) / 2
+        # 3. Run model with bsz = 3 with grad to compute training mem.
+        input_ = torch.rand(3, *in_shape, device=device, requires_grad=True)
+        output_ = model(input_)
+        bsz_consump = torch.cuda.max_memory_allocated(device) - env_mem
 
     # Header
     info = info + "┌" + "─" * row_width[0] + \
@@ -207,27 +207,33 @@ def stat(model: torch.nn.Module,
                   "┴" + "─" * row_width[3] + \
                   "┴" + "─" * row_width[4] + \
                   "┴" + "─" * row_width[5] + "┤\n"
-    info = info + "│{}│\n".format(fmt("Model params: {}".format(
+    info = info + "│{}│\n".format(fmt("MParams: {}".format(
         elafmt(model_params, 1000, ["", "K", "M", "B", "T"], 4),
         ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
-    if hidden_mem == -1:
-        info = info + "|{}|\n".format(fmt("Model memory: {}".format(
-                elafmt(model_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+    info = info + "│{}│\n".format(fmt("MMemory: {}".format(
+        elafmt(model_memsz, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+        ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+    if flag_mem:
+        info = info + "│{}│\n".format(fmt("PyTorch context: ~400 MiB",
+            row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
+        info = info + "│{}│\n".format(fmt("IMemory: batch * {}".format(
+            elafmt(peak_overhead, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
-    else:
-        info = info + "|{}|\n".format(fmt("TMem. (SGD): {} + {} * bsz".format(
-                elafmt((17039360 if torch.__version__ >= '2' else 0) + model_mem * 2 + optim_mem_x1, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
-                elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+        info = info + "│{}│\n".format(fmt("TMemory: batch * {}".format(
+            elafmt(bsz_consump, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
-        info = info + "|{}|\n".format(fmt("TMem. (Adam): {} + {} * bsz".format(
-                elafmt((17039360 if torch.__version__ >= '2' else 0) + model_mem * 2 + optim_mem_x1 * 2, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
-                elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
-            ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
-        info = info + "|{}|\n".format(fmt("IMem.: {} + {} * bsz".format(
-                elafmt((17039360 if torch.__version__ >= '2' else 0) + model_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
-                elafmt(hidden_mem, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
+        info = info + "│{}│\n".format(fmt("Optim: {} (SGD+M: x2, Adam: x3)".format(
+            elafmt(model_memsz, 1024, ["Bytes", "KiB", "MiB", "GiB", "TiB"], 4),
             ), row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5, "left"))
     info = info + "└" + "─" * (row_width[0] + row_width[1] + row_width[2] + row_width[3] + row_width[4] + row_width[5] + 5) + "┘"
+    if style == "plain":
+        info = info.replace("┌", "-").replace("─", "-").replace("┬", "-").replace("┐", "-").replace("├", "-").replace("┼", "-").replace("┤", "-").replace("┴", "-").replace("└", "-").replace("┘", "-")
+        info = info.replace("│", "|")
+        info = info.replace(Style.RESET_ALL, "").replace(Style.NORMAL, "").replace(Style.BRIGHT, "").replace(Style.DIM, "")
+        info = info.replace(Fore.RESET, "").replace(Fore.GREEN, "").replace(Fore.RED, "")
+        info = info.replace(Back.RESET, "")
+    elif style != "fancy":
+        raise ValueError("Unknown style: {}".format(style))
 
     return info
 
