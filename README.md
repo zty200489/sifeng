@@ -15,7 +15,7 @@
     <a href="https://github.com/zty200489/sifeng/commits"><img alt="commits" src="https://img.shields.io/github/commit-activity/y/zty200489/sifeng?logo=git&logoColor=white"></a>
     <a href="#repo-size"><img alt="repo-size" src="https://img.shields.io/github/repo-size/zty200489/sifeng?logo=github&logoColor=white"></a>
     <br />
-    <a href="https://zty200489.github.io/sifeng/#/change-log/README"><img alt="version" src="https://img.shields.io/badge/version-0.5.0-74c365"></a>
+    <a href="https://zty200489.github.io/sifeng/#/change-log/README"><img alt="version" src="https://img.shields.io/badge/version-0.5.1-74c365"></a>
     <a href="https://github.com/zty200489/sifeng/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/github/license/zty200489/sifeng"></a>
 </p>
 
