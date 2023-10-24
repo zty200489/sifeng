@@ -150,7 +150,8 @@ def stat(model: torch.nn.Module,
         # 3. Run model with bsz = 3 with grad to compute training mem.
         input_ = torch.rand(3, *in_shape, device=device, requires_grad=True)
         output_ = model(input_)
-        bsz_consump = torch.cuda.max_memory_allocated(device) - env_mem
+        bsz_consump = torch.cuda.max_memory_allocated(device) - env_mem +                           \
+            np.prod(output_.shape) * mem_lookup[output_.dtype] / 3 + 512
 
     # Header
     info = info + "┌" + "─" * row_width[0] + \
